@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-Time Chat App</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        /* Chat Container Layout */
+        .chat-container {
+            width: 100%;
+            max-width: 450px;
+            height: 80vh;
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Chat Header */
+        .chat-header {
+            background-color: #075e54;
+            color: white;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .chat-header h2 {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .chat-header .status {
+            font-size: 0.75rem;
+            color: #25d366;
+        }
+
+        /* Chat Messages Box */
+        .chat-messages {
+            flex: 1;
+            padding: 15px;
+            background-color: #efeae2;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            scroll-behavior: smooth;
+        }
+
+        /* Message Styling & Animations */
+        .message {
+            max-width: 75%;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            line-height: 1.4;
+            position: relative;
+            animation: fadeIn 0.3s ease-in-out;
+            word-wrap: break-word;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Sent vs Received Styles */
+        .message.sent {
+            background-color: #d9fdd3;
+            align-self: flex-end;
+            border-top-right-radius: 0;
+        }
+
+        .message.received {
+            background-color: #ffffff;
+            align-self: flex-start;
+            border-top-left-radius: 0;
+        }
+
+        /* Timestamp styling */
+        .timestamp {
+            display: block;
+            font-size: 0.7rem;
+            color: #667781;
+            text-align: right;
+            margin-top: 4px;
+        }
+
+        /* Chat Input Area */
+        .chat-input-area {
+            display: flex;
+            padding: 10px;
+            background-color: #f0f2f5;
+            gap: 8px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .chat-input-area input {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 20px;
+            outline: none;
+            font-size: 0.95rem;
+            background-color: #ffffff;
+        }
+
+        .chat-input-area button {
+            background-color: #00a884;
+            color: white;
+            border: none;
+            padding: 0 18px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+
+        .chat-input-area button:hover {
+            background-color: #008f72;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="chat-container">
+        <div class="chat-header">
+            <div>
+                <h2>ChatBox</h2>
+                <span class="status">● Online</span>
+            </div>
+        </div>
+
+        <div class="chat-messages" id="chatMessages"></div>
+
+        <form class="chat-input-area" id="chatForm">
+            <input type="text" id="messageInput" placeholder="Type a message..." autocomplete="off" required>
+            <button type="submit">Send</button>
+        </form>
+    </div>
+
+    <script>
+        const chatMessages = document.getElementById('chatMessages');
+        const chatForm = document.getElementById('chatForm');
+        const messageInput = document.getElementById('messageInput');
+
+        // Predefined chatbot responses
+        const botReplies = [
+            "Hello! How can I help you today?",
+            "That sounds interesting! Tell me more.",
+            "I'm a frontend-only chatbot, but I'm doing my best!",
+            "Thanks for reaching out! 🙌",
+            "Could you clarify that a bit?",
+            "Awesome! Let me know if you need anything else."
+        ];
+
+        // Load messages from localStorage on initialization
+        document.addEventListener('DOMContentLoaded', loadMessages);
+
+        // Handle sending message
+        chatForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const messageText = messageInput.value.trim();
+            if (!messageText) return;
+
+            // 1. Create and display User message
+            appendMessage(messageText, 'sent');
+            saveMessage(messageText, 'sent');
+            messageInput.value = '';
+
+            // 2. Simulate Chatbot Response after a short delay
+            setTimeout(() => {
+                const randomReply = botReplies[Math.floor(Math.random() * botReplies.length)];
+                appendMessage(randomReply, 'received');
+                saveMessage(randomReply, 'received');
+            }, 1000);
+        });
+
+        // Function to create and insert message element into DOM
+        function appendMessage(text, type, timeStr = null) {
+            const messageDiv = document.createElement('div');
+            messageDiv.classList.add('message', type);
+
+            // Get current time if no timestamp is provided
+            if (!timeStr) {
+                const now = new Date();
+                timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            }
+
+            messageDiv.innerHTML = `${text} <span class="timestamp">${timeStr}</span>`;
+            chatMessages.appendChild(messageDiv);
+
+            // Smooth scroll to the bottom of the chat container
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // Save individual message object to localStorage array
+        function saveMessage(text, type) {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            
+            let messages = JSON.parse(localStorage.getItem('chat_history')) || [];
+            messages.push({ text, type, timestamp: timeStr });
+            localStorage.setItem('chat_history', JSON.stringify(messages));
+        }
+
+        // Load all saved history from localStorage
+        function loadMessages() {
+            let messages = JSON.parse(localStorage.getItem('chat_history')) || [];
+            
+            // If no history exists, append a default welcome message
+            if (messages.length === 0) {
+                appendMessage("Hi there! Try sending a message below.", 'received');
+            } else {
+                messages.forEach(msg => {
+                    appendMessage(msg.text, msg.type, msg.timestamp);
+                });
+            }
+        }
+    </script>
+</body>
+</html>
